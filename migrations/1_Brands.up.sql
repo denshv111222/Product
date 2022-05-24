@@ -1,0 +1,5 @@
+CREATE TABLE if NOT EXISTS brands (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR,
+    slug VARCHAR
+);

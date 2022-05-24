@@ -1,0 +1,262 @@
+package storage
+
+import (
+	"GitHab/Standart_Server_API/internal/app/models"
+	"fmt"
+	"log"
+)
+
+type UserRepository struct {
+	storage *Storage
+}
+
+var (
+	tableUser string = "users"
+)
+
+func (ur *UserRepository) Create(u *models.User) (*models.User, error) {
+	query := fmt.Sprintf("INSERT INTO %s (login_user, password_user) VALUES ($1, $2) RETURNING id_user", tableUser)
+	if err := ur.storage.db.QueryRow(query, u.Login, u.Password).Scan(&u.ID); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (ur *UserRepository) FindUserByLogin(login string) (*models.User, bool, error) {
+
+	users, err := ur.SelectAll()
+	var founded bool
+	if err != nil {
+		return nil, founded, err
+	}
+	var userFinded *models.User
+	for _, u := range users {
+
+		if u.Login == login {
+			userFinded = u
+			founded = true
+			break
+
+		}
+
+	}
+	return userFinded, founded, nil
+}
+
+func (ar *UserRepository) DeleteById(id int) (*models.User, error) {
+	user, ok, err := ar.FindUserById(id)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		query := fmt.Sprintf("DELETE FROM %s where id_user=$1", tableUser)
+		_, err = ar.storage.db.Exec(query, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return user, nil
+}
+
+func (ur *UserRepository) FindUserById(id int) (*models.User, bool, error) {
+
+	users, err := ur.SelectAll()
+	var founded bool
+	if err != nil {
+		return nil, founded, err
+	}
+	var userFinded *models.User
+	for _, u := range users {
+
+		if u.ID == id {
+			userFinded = u
+			founded = true
+			break
+
+		}
+
+	}
+	return userFinded, founded, nil
+}
+
+func (ur *UserRepository) SelectAll() ([]*models.User, error) {
+	query := fmt.Sprintf("SELECT * FROM  %s ", tableUser)
+	rows, err := ur.storage.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		u := models.User{}
+		err := rows.Scan(&u.ID, &u.Login, &u.Password)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		users = append(users, &u)
+	}
+	return users, nil
+}
+
+func (ar *UserRepository) Update(id int, userin *models.User) (*models.User, error) {
+	user, ok, err := ar.FindUserById(id)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+
+		query := fmt.Sprintf("UPDATE %s SET login_user=$1,password_user=$2  where id_user=$3", tableUser)
+		fmt.Println(query)
+		_, err = ar.storage.db.Exec(query, userin.Login, userin.Password, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	user, ok, err = ar.FindUserById(id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+
+}
+
+
+
+
+select %s.id,%s.name,
+	%s.id_atribute,%s.name,%s.slug ,
+	%s.id_unit,%s.name,%s.slug,
+	%s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description,%s.sort,
+	%s.id,%s.name,%s.slug
+from %s
+inner join %s
+on %s.atribute_id = %s.id_atribute
+inner join %s
+on %s.unit_id = %s.id_unit
+inner join %s
+on %s.atributes_values_id = %s.id
+inner join %s
+on %s.products_id = %s.id
+inner join %s
+on %s.id = %s.id
+
+
+tableAttributes_values,tableAttributes_values,tableAttributes,tableAttributes,tableAttributes,tableunits,tableunits,tableunits,tableProduct,tableProduct,tableProduct,tableProduct,tableProduct,tableProduct,tableProduct,tableBrends,tableBrends,tableBrends,tableAttributes_values,
+tableAttributes,tableAttributes_values,tableAttributes,tableunits,tableAttributes,tableunits,tableAttributes_values_products,tableAttributes_values_products,tableAttributes_values,tableProduct,tableAttributes_values_products,tableProduct,tableBrends,tableBrends,
+tableProduct
+
+
+
+
+
+select %s.id_categories,%s.name,%s.slug,%s.parent_id,
+	%s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description,%s.sort,
+	%s.id,%s.name,%s.slug
+	from %s
+inner join %s
+on  %s.categories_id = %s.id_categories
+inner join %s on %s.products_id = %s.id
+inner join %s
+on %s.id = %s.id
+
+tableCategories,tableCategories,tableCategories,tableCategories,tableProduct,tableProduct,tableProduct,tableProduct,
+tableProduct,tableProduct,tableBrends,tableBrends,tableBrends,tableCategoties_products,tableCategories,tableCategoties_products,tableCategories,tableProduct,tableCategoties_products,tableProduct,tableBrends,tableBrends,tableProduct
+
+migrate -path migrations -database "postgres://localhost:5432/restapi?sslmode=disable&user=postgres&password=postgres" up
+
+
+insert into brands(name,slug) values ('A','a');
+insert into brands(name,slug) values ('B','b');
+insert into brands(name,slug) values ('C','c');
+insert into brands(name,slug) values ('D','d');
+insert into brands(name,slug) values ('E','e');
+insert into brands(name,slug) values ('F','f');
+select * from brands
+
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('A','a',13,'a','short','full',1);
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('B','b',18,'b','short','full',1);
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('C','c',17,'c','short','full',1);
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('D','d',14,'d','short','full',1);
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('E','e',16,'e','short','full',1);
+insert into products(name,slug,brand_id,sku,short_description,full_description,sort) values ('F','f',16,'f','short','full',1);
+select * from products
+
+insert into units(name,slug) values ('A','a');
+insert into units(name,slug) values ('B','b');
+insert into units(name,slug) values ('C','c');
+insert into units(name,slug) values ('D','d');
+insert into units(name,slug) values ('E','e');
+insert into units(name,slug) values ('F','f');
+select * from units
+
+insert into atributes (name,slug,unit_id) values ('A','a',2);
+insert into atributes(name,slug,unit_id) values ('B','b',4);
+insert into atributes(name,slug,unit_id) values ('C','c',1);
+insert into atributes(name,slug,unit_id) values ('D','d',2);
+insert into atributes(name,slug,unit_id) values ('E','e',3);
+insert into atributes(name,slug,unit_id) values ('F','f',4);
+select * from atributes
+
+insert into atributes_values (name,atribute_id) values ('A',2);
+insert into atributes_values(name,atribute_id) values ('B',4);
+insert into atributes_values(name,atribute_id) values ('C',1);
+insert into atributes_values(name,atribute_id) values ('D',2);
+insert into atributes_values(name,atribute_id) values ('E',3);
+insert into atributes_values(name,atribute_id) values ('F',4);
+select * from atributes_values
+
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (7,2,1);
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (2,4,1);
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (6,1,1);
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (5,2,1);
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (3,3,1);
+insert into atributes_values_products(products_id,atributes_values_id,sort) values (4,4,1);
+select * from atributes_values_products
+
+insert into Images (name,storage,path) values ('A','a','a');
+insert into Images(name,storage,path) values ('B','b','b');
+insert into Images(name,storage,path) values ('C','c','c');
+insert into Images(name,storage,path) values ('D','d','d');
+insert into Images(name,storage,path) values ('E','e','e');
+insert into Images(name,storage,path) values ('F','f','f');
+select * from Images
+
+insert into Videos (name,storage,path) values ('A','a','a');
+insert into Videos(name,storage,path) values ('B','b','b');
+insert into Videos(name,storage,path) values ('C','c','c');
+insert into Videos(name,storage,path) values ('D','d','d');
+insert into Videos(name,storage,path) values ('E','e','e');
+insert into Videos(name,storage,path) values ('F','f','f');
+select * from Videos
+
+insert into Categories_products (products_id,categories_id,sort)values (2,2,1);
+insert into Categories_products(products_id,categories_id,sort)values (2,4,1);
+insert into Categories_products(products_id,categories_id,sort)values (3,2,1);
+insert into Categories_products(products_id,categories_id,sort)values (5,5,1);
+insert into Categories_products(products_id,categories_id,sort)values (2,5,1);
+insert into Categories_products(products_id,categories_id,sort)values (6,6,1);
+select * from Categories_products
+
+insert into videos_products (products_id,videos_id,sort)values (2,2,1);
+insert into videos_products(products_id,videos_id,sort)values (2,4,1);
+insert into videos_products(products_id,videos_id,sort)values (3,2,1);
+insert into videos_products(products_id,videos_id,sort)values (5,5,1);
+insert into videos_products(products_id,videos_id,sort)values (2,5,1);
+insert into videos_products(products_id,videos_id,sort)values (6,6,1);
+select * from videos_products
+
+insert into images_products (products_id,images_id,sort)values (2,2,1);
+insert into images_products(products_id,images_id,sort)values (2,4,1);
+insert into images_products(products_id,images_id,sort)values (3,2,1);
+insert into images_products(products_id,images_id,sort)values (5,5,1);
+insert into images_products(products_id,images_id,sort)values (2,5,1);
+insert into images_products(products_id,images_id,sort)values (6,6,1);
+select * from images_products
+
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjQ5MzM0ODUzLCJuYW1lIjoicm9vdDIifQ.74V4sthWaYmKFUdY4z2kbiiC8tf7YesgjocFvqHmhpc
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjQ5MzM0ODczLCJuYW1lIjoicm9vdDIifQ.BOvZGMgmh-E1psxQsBEEnBuwbUiGu2DYSyN4TJZyxIM
+eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjQ5MzM1MDE5LCJuYW1lIjoicm9vdDIifQ.ESy5iKCPyCUGJPf_ePIAuk1ChIl-zMMAspmyeQXOrkO4gvMUsdUZ7ddCrYh5rcld4gboRKiQ3byXzSCXaEiX5g
