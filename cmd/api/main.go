@@ -28,10 +28,11 @@ func main() {
 	_, err := toml.DecodeFile(configPath, config) // Десериалзиуете содержимое .toml файла
 	if err != nil {
 		log.Println("can not find configs file. using default values:", err)
+		log.Println("Э")
 	}
 
 	server := api.New(config)
-	
+
 	if err := server.Start(); err != nil {
 		log.Fatal(err)
 	}
