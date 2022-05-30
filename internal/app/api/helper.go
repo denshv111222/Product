@@ -42,6 +42,7 @@ func (a *API) configreRouterField() {
 	a.router.HandleFunc(prefix+"/brand/{id}", a.GetBrandsById).Methods("GET")
 
 	a.router.HandleFunc(prefix+"/categories", a.GetCategories).Methods("GET")
+	a.router.HandleFunc(prefix+"/category/{id}", a.GetCategoryById).Methods("GET")
 	a.router.HandleFunc(prefix+"/categories", a.PostCategory).Methods("POST")
 	a.router.HandleFunc(prefix+"/categories/{id}", a.PutCategory).Methods("PUT")
 	a.router.HandleFunc(prefix+"/categories/{id}", a.DeleteCategoryById).Methods("DELETE")

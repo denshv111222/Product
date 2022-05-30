@@ -5,6 +5,7 @@ import (
 	"fmt"
 	vaild "github.com/asaskevich/govalidator"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -24,7 +25,7 @@ func (catRep *Categoryrepository) CreateCategory(c *models.Categories) (*models.
 	return c, nil
 }
 func (catRep *Categoryrepository) DeleteCategory(id int) error {
-	query := fmt.Sprintf("DELETE FROM %s WHERE id_catigories = %d ", tableCategories, id)
+	query := fmt.Sprintf("DELETE FROM %s WHERE id_categories = %d ", tableCategories, id)
 	fmt.Println(query)
 	if _, err := catRep.storage.db.Exec(query); err != nil {
 		return err
@@ -44,8 +45,8 @@ func (catRep *Categoryrepository) UpdateCategory(id int, c *models.Categories) e
 		fieldlist = append(fieldlist, ("slug='" + c.Slug + "'"))
 	}
 	fmt.Println(fieldlist)
-	if c.Parent_id != "" {
-		fieldlist = append(fieldlist, ("parent_id=" + c.Parent_id + ""))
+	if c.Parent_id != 0 {
+		fieldlist = append(fieldlist, ("parent_id=" + strconv.Itoa(c.Parent_id) + ""))
 	}
 	fmt.Println(fieldlist)
 	request := strings.Join(fieldlist, ", ")
@@ -90,7 +91,7 @@ func (catRep *Categoryrepository) FilterAllCategories(fil *models.Filter) ([]*mo
 			}
 		}
 	}
-	query := fmt.Sprintf("Select count(*) FROM %s,%s,%s", tableCategories, where, sort)
+	query := fmt.Sprintf("Select count(*) FROM %s %s %s", tableCategories, where, sort)
 	if err := catRep.storage.db.QueryRow(query).Scan(&fil.Pages.AllRecords); err != nil {
 		return nil, err
 	}
@@ -124,4 +125,17 @@ func (catRep *Categoryrepository) FilterAllCategories(fil *models.Filter) ([]*mo
 		categories = append(categories, &c)
 	}
 	return categories, nil
+}
+func (catRep *Categoryrepository) GetCategoryById(id int) (*models.Categories, error) {
+
+	fmt.Println(id)
+	var cat models.Categories
+	query := fmt.Sprintf("Select * FROM %s WHERE id_categories = %d", tableCategories, id)
+	fmt.Println(query)
+	if err := catRep.storage.db.QueryRow(query).Scan(&cat.Id, &cat.Name, &cat.Slug, &cat.Parent_id); err != nil {
+		return nil, err
+	}
+	fmt.Println(query)
+	return &cat, nil
+
 }

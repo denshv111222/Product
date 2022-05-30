@@ -152,6 +152,47 @@ func (api *API) GetCategories(writer http.ResponseWriter, req *http.Request) {
 	fmt.Println(filter)
 	brand, err := api.storage.Category().FilterAllCategories(&filter)
 	if err != nil {
+		api.logger.Info("Error while category SelectAll: ", err)
+		msg := Message{
+			StatusCode: 501,
+			Message:    "We have some troubles to accessing database. Try again later",
+			IsError:    true,
+		}
+		writer.WriteHeader(501)
+		json.NewEncoder(writer).Encode(msg)
+		return
+	}
+	Category := struct {
+		Items  []*models.Categories
+		Filter models.Filter
+	}{
+		Items:  brand,
+		Filter: filter,
+	}
+	writer.WriteHeader(200)
+	json.NewEncoder(writer).Encode(Category)
+}
+
+func (api *API) GetCategoryById(writer http.ResponseWriter, req *http.Request) {
+	fmt.Println("start GetBrandsbyid")
+	var (
+		category *models.Categories
+	)
+	initHeaders(writer)
+	id, err := strconv.Atoi(mux.Vars(req)["id"])
+	if err != nil {
+		api.logger.Info("Troubles while parsing {id} param:", err)
+		msg := Message{
+			StatusCode: 400,
+			Message:    "Unapropriate id value. don't use ID as uncasting to int value.",
+			IsError:    true,
+		}
+		writer.WriteHeader(400)
+		json.NewEncoder(writer).Encode(msg)
+		return
+	}
+	category, err = api.storage.Category().GetCategoryById(id)
+	if err != nil {
 		api.logger.Info("Error while brands SelectAll: ", err)
 		msg := Message{
 			StatusCode: 501,
@@ -163,6 +204,5 @@ func (api *API) GetCategories(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 	writer.WriteHeader(200)
-	json.NewEncoder(writer).Encode(brand)
-	json.NewEncoder(writer).Encode(filter)
+	json.NewEncoder(writer).Encode(category)
 }

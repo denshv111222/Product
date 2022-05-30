@@ -1,12 +1,11 @@
-package storage
+package api
 
-func allPage(allr int, limit int) int {
+func AllPage(allr int, limit int) int {
 	var (
 		allp int
 	)
 	if limit == 0 {
 		limit = 1
-
 	}
 	ost := allr % limit
 	if ost != 0 {

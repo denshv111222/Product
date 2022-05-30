@@ -1,25 +1,15 @@
 package models
 
-type FieldFilter struct {
-	Field      string `json:"field"`
-	Operations string `json:"operations""`
-	Value      string `json:"value"`
+type Field struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Operation string `json:"operation"`
+	Order     bool   `json:"order"` // true for ASC false for DESC
 }
 
-type Filter struct {
-	Fields *[]FieldFilter
-	Sorts  *[]FieldSort
-	Pages  *Pages
-}
-type FieldSort struct {
-	Sort     string `json:"sort"`
-	SortView string `json:"sortview"`
-}
-
-type Pages struct {
-	СurrentPage        int `json:"currentpage"`
-	AllPages           int `json:"allpages""`
-	CountsRecordOnPage int `json:"countsrecordonpage"`
-	AllRecords         int `json:"allrecords"`
-	RemainedRecords    int `json:"remainedrecords"`
+type PageRequest struct {
+	PageNumber   int `json:"pg_number"`
+	PageLength   int `json:"pg_length"`
+	Fields       *[]Field
+	TotalRecords int
 }
