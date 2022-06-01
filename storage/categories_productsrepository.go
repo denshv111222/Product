@@ -29,7 +29,7 @@ func (catproRep *Category_productrepository) CreateCategories_products(catprod *
 	catproRep.storage.db.QueryRow(querry, catprod.Product.Id, catprod.Categories.Id, catprod.Sort)
 	return nil
 }
-func (catproRep *Category_productrepository) FilterAllCategories_products(fil *models.Filter) ([]*models.Categories_products, error) { //срань которую надо переделать(а можно и не переделывать)
+func (catproRep *Category_productrepository) FilterAllCategories_products(fil *models.PageRequest) ([]*models.Categories_products, error) { //срань которую надо переделать(а можно и не переделывать)
 	fieldlist := make([]string, 0)
 	sortList := make([]string, 0)
 
@@ -39,42 +39,38 @@ func (catproRep *Category_productrepository) FilterAllCategories_products(fil *m
 			if filters.Value != "" {
 				where = "where "
 				if vaild.IsInt(filters.Value) == true {
-					fieldlist = append(fieldlist, filters.Field+filters.Operations+filters.Value)
+					fieldlist = append(fieldlist, filters.Name+filters.Operation+filters.Value)
 				} else {
-					fieldlist = append(fieldlist, filters.Field+" like "+"'%"+filters.Value+"%'")
+					fieldlist = append(fieldlist, filters.Name+" like "+"'%"+filters.Value+"%'")
 				}
 			} else {
 				where = ""
+			}
+		}
+		for _, sorts := range *fil.Fields {
+			if sorts.Order == false {
+				sortList = append(sortList, sorts.Name+" "+"DESC")
+			} else {
+				sort = ""
 			}
 		}
 	}
 	request := strings.Join(fieldlist, " and ")
 	where = where + request
 	request = ""
-	if len(*fil.Sorts) != 0 {
-		sort = "order by "
-		for _, sorts := range *fil.Sorts {
-			if sorts.Sort != "" {
-				sortList = append(sortList, sorts.Sort+" "+sorts.SortView)
-			} else {
-				sort = ""
-			}
-		}
-	}
-	query := fmt.Sprintf("Select count(*) FROM %s,%s,%s", tableCategories, where, sort)
-	if err := catproRep.storage.db.QueryRow(query).Scan(&fil.Pages.AllRecords); err != nil {
-		return nil, err
-	}
-	fil.Pages.AllPages = allPage(fil.Pages.AllRecords, fil.Pages.CountsRecordOnPage)
-	fil.Pages.RemainedRecords = fil.Pages.AllRecords - fil.Pages.CountsRecordOnPage*fil.Pages.СurrentPage
-	//подумать над этим
-	if fil.Pages.RemainedRecords < 0 {
-		fil.Pages.RemainedRecords = 0
-	}
+
 	request = strings.Join(sortList, ",")
 	sort = sort + request
 	fmt.Println(request)
-	query = fmt.Sprintf("select %s.id_categories,%s.name,%s.slug,%s.parent_id,%s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description,%s.sort,%s.id,%s.name,%s.slug,%s.sort from %s inner join %s on  %s.categories_id = %s.id_categories inner join %s on %s.products_id = %s.id inner join %s on %s.id = %s.id %s %s LIMIT %d OFFSET %d", tableCategories, tableCategories, tableCategories, tableCategories, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableBrends, tableBrends, tableBrends, tableCategoties_products, tableCategoties_products, tableCategories, tableCategoties_products, tableCategories, tableProduct, tableCategoties_products, tableProduct, tableBrends, tableBrends, tableProduct, where, sort, fil.Pages.CountsRecordOnPage, (fil.Pages.СurrentPage-1)*fil.Pages.CountsRecordOnPage)
+	query := fmt.Sprintf("Select count(*) FROM %s %s %s", tableCategoties_products, where, sort)
+	if err := catproRep.storage.db.QueryRow(query).Scan(&fil.TotalRecords); err != nil {
+		return nil, err
+	}
+
+	request = strings.Join(sortList, ",")
+	sort = sort + request
+	fmt.Println(request)
+	query = fmt.Sprintf("select %s.id_categories,%s.name,%s.slug,%s.parent_id,%s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description,%s.sort,%s.id,%s.name,%s.slug,%s.sort from %s inner join %s on  %s.categories_id = %s.id_categories inner join %s on %s.products_id = %s.id inner join %s on %s.id = %s.id %s %s LIMIT %d OFFSET %d", tableCategories, tableCategories, tableCategories, tableCategories, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableBrends, tableBrends, tableBrends, tableCategoties_products, tableCategoties_products, tableCategories, tableCategoties_products, tableCategories, tableProduct, tableCategoties_products, tableProduct, tableBrends, tableBrends, tableProduct, where, sort, fil.PageLength, (fil.PageNumber-1)*fil.PageLength)
 	where, sort = "", ""
 
 	fmt.Println(query)

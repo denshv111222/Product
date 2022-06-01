@@ -5,8 +5,3 @@ type Brand struct {
 	Name string `json:"Name"`
 	Slug string `json:"Slug"`
 }
-
-type BrandFilter struct {
-	Brands []*Brand
-	Filter *Filter
-}

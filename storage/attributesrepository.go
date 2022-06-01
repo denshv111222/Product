@@ -65,7 +65,7 @@ func (atRep *Attributsrepository) UpdateAttribute(id int, a *models.Attributes) 
 	}
 	return nil
 }
-func (atRep *Attributsrepository) FilterAllAttributes(fil *models.Filter) ([]*models.Attributes, error) { //срань которую надо переделать(а можно и не переделывать)
+func (atRep *Attributsrepository) FilterAllAttributes(fil *models.PageRequest) ([]*models.Attributes, error) { //срань которую надо переделать(а можно и не переделывать)
 	fieldlist := make([]string, 0)
 	sortList := make([]string, 0)
 
@@ -75,42 +75,38 @@ func (atRep *Attributsrepository) FilterAllAttributes(fil *models.Filter) ([]*mo
 			if filters.Value != "" {
 				where = "where "
 				if vaild.IsInt(filters.Value) == true {
-					fieldlist = append(fieldlist, filters.Field+filters.Operations+filters.Value)
+					fieldlist = append(fieldlist, filters.Name+filters.Operation+filters.Value)
 				} else {
-					fieldlist = append(fieldlist, tableAttributes+"."+filters.Field+" like "+"'%"+filters.Value+"%'")
+					fieldlist = append(fieldlist, filters.Name+" like "+"'%"+filters.Value+"%'")
 				}
 			} else {
 				where = ""
+			}
+		}
+		for _, sorts := range *fil.Fields {
+			if sorts.Order == false {
+				sortList = append(sortList, sorts.Name+" "+"DESC")
+			} else {
+				sort = ""
 			}
 		}
 	}
 	request := strings.Join(fieldlist, " and ")
 	where = where + request
 	request = ""
-	if len(*fil.Sorts) != 0 {
-		sort = "order by "
-		for _, sorts := range *fil.Sorts {
-			if sorts.Sort != "" {
-				sortList = append(sortList, tableAttributes+"."+sorts.Sort+" "+sorts.SortView)
-			} else {
-				sort = ""
-			}
-		}
-	}
-	query := fmt.Sprintf("Select count(*) FROM %s,%s,%s", tableAttributes, where, sort)
-	if err := atRep.storage.db.QueryRow(query).Scan(&fil.Pages.AllRecords); err != nil {
-		return nil, err
-	}
-	fil.Pages.AllPages = allPage(fil.Pages.AllRecords, fil.Pages.CountsRecordOnPage)
-	fil.Pages.RemainedRecords = fil.Pages.AllRecords - fil.Pages.CountsRecordOnPage*fil.Pages.СurrentPage
-	//подумать над этим
-	if fil.Pages.RemainedRecords < 0 {
-		fil.Pages.RemainedRecords = 0
-	}
+
 	request = strings.Join(sortList, ",")
 	sort = sort + request
 	fmt.Println(request)
-	query = fmt.Sprintf("Select %s.id_atribute,%s.name,%s.slug ,%s.id_unit,%s.name,%s.slug from %s inner join %s on  %s.unit_id = %s.id_unit %s %s LIMIT %d OFFSET %d", tableAttributes, tableAttributes, tableAttributes, tableunits, tableunits, tableunits, tableunits, tableAttributes, tableAttributes, tableunits, where, sort, fil.Pages.CountsRecordOnPage, (fil.Pages.СurrentPage-1)*fil.Pages.CountsRecordOnPage)
+	query := fmt.Sprintf("Select count(*) FROM %s %s %s", tableAttributes, where, sort)
+	if err := atRep.storage.db.QueryRow(query).Scan(&fil.TotalRecords); err != nil {
+		return nil, err
+	}
+
+	request = strings.Join(sortList, ",")
+	sort = sort + request
+	fmt.Println(request)
+	query = fmt.Sprintf("Select %s.id_atribute,%s.name,%s.slug ,%s.id_unit,%s.name,%s.slug from %s inner join %s on  %s.unit_id = %s.id_unit %s %s LIMIT %d OFFSET %d", tableAttributes, tableAttributes, tableAttributes, tableunits, tableunits, tableunits, tableunits, tableAttributes, tableAttributes, tableunits, where, sort, fil.PageLength, (fil.PageNumber-1)*fil.PageLength)
 	where, sort = "", ""
 
 	fmt.Println(query)

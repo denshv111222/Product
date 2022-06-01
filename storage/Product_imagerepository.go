@@ -30,7 +30,7 @@ func (prim *Products_imagesrepository) CreateProduct_image(prodimage *models.Pro
 	prim.storage.db.QueryRow(querry, prodimage.Product.Id, prodimage.Image.Id)
 	return nil
 }
-func (prim *Products_imagesrepository) FilterAllProducts_images(fil *models.Filter) ([]*models.Products_images, error) { //срань которую надо переделать(а можно и не переделывать)
+func (prim *Products_imagesrepository) FilterAllProducts_images(fil *models.PageRequest) ([]*models.Products_images, error) { //срань которую надо переделать(а можно и не переделывать)
 	fieldlist := make([]string, 0)
 	sortList := make([]string, 0)
 
@@ -40,42 +40,38 @@ func (prim *Products_imagesrepository) FilterAllProducts_images(fil *models.Filt
 			if filters.Value != "" {
 				where = "where "
 				if vaild.IsInt(filters.Value) == true {
-					fieldlist = append(fieldlist, filters.Field+filters.Operations+filters.Value)
+					fieldlist = append(fieldlist, filters.Name+filters.Operation+filters.Value)
 				} else {
-					fieldlist = append(fieldlist, filters.Field+" like "+"'%"+filters.Value+"%'")
+					fieldlist = append(fieldlist, filters.Name+" like "+"'%"+filters.Value+"%'")
 				}
 			} else {
 				where = ""
+			}
+		}
+		for _, sorts := range *fil.Fields {
+			if sorts.Order == false {
+				sortList = append(sortList, sorts.Name+" "+"DESC")
+			} else {
+				sort = ""
 			}
 		}
 	}
 	request := strings.Join(fieldlist, " and ")
 	where = where + request
 	request = ""
-	if len(*fil.Sorts) != 0 {
-		sort = "order by "
-		for _, sorts := range *fil.Sorts {
-			if sorts.Sort != "" {
-				sortList = append(sortList, sorts.Sort+" "+sorts.SortView)
-			} else {
-				sort = ""
-			}
-		}
-	}
-	query := fmt.Sprintf("Select count(*) FROM %s,%s,%s", Products_imagesTable, where, sort)
-	if err := prim.storage.db.QueryRow(query).Scan(&fil.Pages.AllRecords); err != nil {
-		return nil, err
-	}
-	fil.Pages.AllPages = allPage(fil.Pages.AllRecords, fil.Pages.CountsRecordOnPage)
-	fil.Pages.RemainedRecords = fil.Pages.AllRecords - fil.Pages.CountsRecordOnPage*fil.Pages.СurrentPage
-	//подумать над этим
-	if fil.Pages.RemainedRecords < 0 {
-		fil.Pages.RemainedRecords = 0
-	}
+
 	request = strings.Join(sortList, ",")
 	sort = sort + request
 	fmt.Println(request)
-	query = fmt.Sprintf("Select %s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description ,%s.sort,%s.id,%s.name,%s.slug,%s.* from images_products inner join %s on %s.id = images_products.products_id inner join %s on %s.id_image = images_products.images_id inner join %s on %s.id = products.brand_id %s %s LIMIT %d OFFSET %d", tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableBrends, tableBrends, tableBrends, tableImages, tableProduct, tableProduct, tableImages, tableImages, tableBrends, tableBrends, where, sort, fil.Pages.CountsRecordOnPage, (fil.Pages.СurrentPage-1)*fil.Pages.CountsRecordOnPage)
+	query := fmt.Sprintf("Select count(*) FROM %s %s %s", Products_imagesTable, where, sort)
+	if err := prim.storage.db.QueryRow(query).Scan(&fil.TotalRecords); err != nil {
+		return nil, err
+	}
+
+	request = strings.Join(sortList, ",")
+	sort = sort + request
+	fmt.Println(request)
+	query = fmt.Sprintf("Select %s.id,%s.name,%s.slug,%s.sku,%s.short_description,%s.full_description ,%s.sort,%s.id,%s.name,%s.slug,%s.* from images_products inner join %s on %s.id = images_products.products_id inner join %s on %s.id_image = images_products.images_id inner join %s on %s.id = products.brand_id %s %s LIMIT %d OFFSET %d", tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableProduct, tableBrends, tableBrends, tableBrends, tableImages, tableProduct, tableProduct, tableImages, tableImages, tableBrends, tableBrends, where, sort, fil.PageLength, (fil.PageNumber-1)*fil.PageLength)
 	where, sort = "", ""
 
 	fmt.Print(query)

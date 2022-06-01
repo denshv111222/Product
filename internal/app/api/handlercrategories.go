@@ -126,17 +126,15 @@ func (api *API) PutCategory(writer http.ResponseWriter, req *http.Request) {
 }
 func (api *API) GetCategories(writer http.ResponseWriter, req *http.Request) {
 	var (
-		filter models.Filter
+		filter models.PageRequest
 	)
 	initHeaders(writer)
-	pg := models.Pages{}
-	fl := make([]models.FieldFilter, 0)
-	so := make([]models.FieldSort, 0)
-	filter = models.Filter{
+	fl := make([]models.Field, 0)
+
+	filter = models.PageRequest{
 		Fields: &fl,
-		Sorts:  &so,
-		Pages:  &pg,
 	}
+	fmt.Println(req.Body)
 	err := json.NewDecoder(req.Body).Decode(&filter)
 	if err != nil {
 		api.logger.Info("Invalid json recieved from brands")
@@ -150,7 +148,7 @@ func (api *API) GetCategories(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println(filter)
-	brand, err := api.storage.Category().FilterAllCategories(&filter)
+	list, err := api.storage.Category().FilterAllCategories(&filter)
 	if err != nil {
 		api.logger.Info("Error while category SelectAll: ", err)
 		msg := Message{
@@ -162,15 +160,21 @@ func (api *API) GetCategories(writer http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(writer).Encode(msg)
 		return
 	}
-	Category := struct {
-		Items  []*models.Categories
-		Filter models.Filter
+	Resp := struct {
+		PgNum    int `json:"pg_number"`
+		PgLen    int `json:"pg_length"`
+		TotalRec int `json:"total_rec"`
+		TotalPg  int `json:"total_pg"`
+		List     []*models.Categories
 	}{
-		Items:  brand,
-		Filter: filter,
+		filter.PageNumber,
+		filter.PageLength,
+		filter.TotalRecords,
+		AllPage(filter.TotalRecords, filter.PageLength),
+		list,
 	}
 	writer.WriteHeader(200)
-	json.NewEncoder(writer).Encode(Category)
+	json.NewEncoder(writer).Encode(Resp)
 }
 
 func (api *API) GetCategoryById(writer http.ResponseWriter, req *http.Request) {

@@ -125,16 +125,13 @@ func (api *API) DeleteVideoById(writer http.ResponseWriter, req *http.Request) {
 }
 func (api *API) GetVideos(writer http.ResponseWriter, req *http.Request) {
 	var (
-		filter models.Filter
+		filter models.PageRequest
 	)
 	initHeaders(writer)
-	pg := models.Pages{}
-	fl := make([]models.FieldFilter, 0)
-	so := make([]models.FieldSort, 0)
-	filter = models.Filter{
+	fl := make([]models.Field, 0)
+
+	filter = models.PageRequest{
 		Fields: &fl,
-		Sorts:  &so,
-		Pages:  &pg,
 	}
 	err := json.NewDecoder(req.Body).Decode(&filter)
 	if err != nil {
@@ -149,7 +146,7 @@ func (api *API) GetVideos(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println(filter)
-	brand, err := api.storage.Video().FilterAllVideos(&filter)
+	list, err := api.storage.Video().FilterAllVideos(&filter)
 	if err != nil {
 		api.logger.Info("Error while brands SelectAll: ", err)
 		msg := Message{
@@ -161,7 +158,19 @@ func (api *API) GetVideos(writer http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(writer).Encode(msg)
 		return
 	}
+	Resp := struct {
+		PgNum    int `json:"pg_number"`
+		PgLen    int `json:"pg_length"`
+		TotalRec int `json:"total_rec"`
+		TotalPg  int `json:"total_pg"`
+		List     []*models.Videos
+	}{
+		filter.PageNumber,
+		filter.PageLength,
+		filter.TotalRecords,
+		AllPage(filter.TotalRecords, filter.PageLength),
+		list,
+	}
 	writer.WriteHeader(200)
-	json.NewEncoder(writer).Encode(brand)
-	json.NewEncoder(writer).Encode(filter)
+	json.NewEncoder(writer).Encode(Resp)
 }

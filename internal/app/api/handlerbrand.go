@@ -128,7 +128,6 @@ func (api *API) GetBrands(writer http.ResponseWriter, req *http.Request) {
 	fmt.Println("start GetBrands")
 	var (
 		filter models.PageRequest
-		brand  []*models.Brand
 	)
 	initHeaders(writer)
 	fl := make([]models.Field, 0)
@@ -150,7 +149,7 @@ func (api *API) GetBrands(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println(filter)
-	brand, err = api.storage.Brand().FilterAllBrands(&filter)
+	list, err := api.storage.Brand().FilterAllBrands(&filter)
 	if err != nil {
 		api.logger.Info("Error while brands SelectAll: ", err)
 		msg := Message{
@@ -174,7 +173,7 @@ func (api *API) GetBrands(writer http.ResponseWriter, req *http.Request) {
 		filter.PageLength,
 		filter.TotalRecords,
 		AllPage(filter.TotalRecords, filter.PageLength),
-		brand,
+		list,
 	}
 	writer.WriteHeader(200)
 	json.NewEncoder(writer).Encode(Resp)

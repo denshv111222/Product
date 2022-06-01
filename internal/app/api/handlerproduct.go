@@ -97,16 +97,13 @@ func (api *API) PostProduct(writer http.ResponseWriter, req *http.Request) {
 }
 func (api *API) GetProduct(writer http.ResponseWriter, req *http.Request) {
 	var (
-		filter models.Filter
+		filter models.PageRequest
 	)
 	initHeaders(writer)
-	pg := models.Pages{}
-	fl := make([]models.FieldFilter, 0)
-	so := make([]models.FieldSort, 0)
-	filter = models.Filter{
+	fl := make([]models.Field, 0)
+
+	filter = models.PageRequest{
 		Fields: &fl,
-		Sorts:  &so,
-		Pages:  &pg,
 	}
 	err := json.NewDecoder(req.Body).Decode(&filter)
 	if err != nil {
@@ -121,7 +118,7 @@ func (api *API) GetProduct(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Println(filter)
-	brand, err := api.storage.Product().FilterAllProducts(&filter)
+	list, err := api.storage.Product().FilterAllProducts(&filter)
 	if err != nil {
 		api.logger.Info("Error while brands SelectAll: ", err)
 		msg := Message{
@@ -133,16 +130,21 @@ func (api *API) GetProduct(writer http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(writer).Encode(msg)
 		return
 	}
-	Product := struct {
-		Items  []*models.Product
-		Filter models.Filter
+	Resp := struct {
+		PgNum    int `json:"pg_number"`
+		PgLen    int `json:"pg_length"`
+		TotalRec int `json:"total_rec"`
+		TotalPg  int `json:"total_pg"`
+		List     []*models.Product
 	}{
-		Items:  brand,
-		Filter: filter,
+		filter.PageNumber,
+		filter.PageLength,
+		filter.TotalRecords,
+		AllPage(filter.TotalRecords, filter.PageLength),
+		list,
 	}
-
 	writer.WriteHeader(200)
-	json.NewEncoder(writer).Encode(Product)
+	json.NewEncoder(writer).Encode(Resp)
 }
 func (api *API) PutProducts(writer http.ResponseWriter, req *http.Request) {
 	initHeaders(writer)

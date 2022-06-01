@@ -60,7 +60,7 @@ func (vi *Videorepository) Update(id int, v *models.Videos) error {
 	}
 	return nil
 }
-func (vi *Videorepository) FilterAllVideos(fil *models.Filter) ([]*models.Videos, error) {
+func (vi *Videorepository) FilterAllVideos(fil *models.PageRequest) ([]*models.Videos, error) {
 	fieldlist := make([]string, 0)
 	sortList := make([]string, 0)
 
@@ -70,42 +70,37 @@ func (vi *Videorepository) FilterAllVideos(fil *models.Filter) ([]*models.Videos
 			if filters.Value != "" {
 				where = "where "
 				if vaild.IsInt(filters.Value) == true {
-					fieldlist = append(fieldlist, filters.Field+filters.Operations+filters.Value)
+					fieldlist = append(fieldlist, filters.Name+filters.Operation+filters.Value)
 				} else {
-					fieldlist = append(fieldlist, filters.Field+" like "+"'%"+filters.Value+"%'")
+					fieldlist = append(fieldlist, filters.Name+" like "+"'%"+filters.Value+"%'")
 				}
 			} else {
 				where = ""
+			}
+		}
+		for _, sorts := range *fil.Fields {
+			if sorts.Order == false {
+				sortList = append(sortList, sorts.Name+" "+"DESC")
+			} else {
+				sort = ""
 			}
 		}
 	}
 	request := strings.Join(fieldlist, " and ")
 	where = where + request
 	request = ""
-	if len(*fil.Sorts) != 0 {
-		sort = "order by "
-		for _, sorts := range *fil.Sorts {
-			if sorts.Sort != "" {
-				sortList = append(sortList, sorts.Sort+" "+sorts.SortView)
-			} else {
-				sort = ""
-			}
-		}
-	}
-	query := fmt.Sprintf("Select count(*) FROM %s,%s,%s", tableVideo, where, sort)
-	if err := vi.storage.db.QueryRow(query).Scan(&fil.Pages.AllRecords); err != nil {
+
+	request = strings.Join(sortList, ",")
+	sort = sort + request
+	fmt.Println(request)
+	query := fmt.Sprintf("Select count(*) FROM %s %s %s", tableVideo, where, sort)
+	if err := vi.storage.db.QueryRow(query).Scan(&fil.TotalRecords); err != nil {
 		return nil, err
-	}
-	fil.Pages.AllPages = allPage(fil.Pages.AllRecords, fil.Pages.CountsRecordOnPage)
-	fil.Pages.RemainedRecords = fil.Pages.AllRecords - fil.Pages.CountsRecordOnPage*fil.Pages.СurrentPage
-	//подумать над этим
-	if fil.Pages.RemainedRecords < 0 {
-		fil.Pages.RemainedRecords = 0
 	}
 	request = strings.Join(sortList, ",")
 	sort = sort + request
 	fmt.Println(request)
-	query = fmt.Sprintf("Select * FROM %s %s %s LIMIT %d OFFSET %d", tableVideo, where, sort, fil.Pages.CountsRecordOnPage, (fil.Pages.СurrentPage-1)*fil.Pages.CountsRecordOnPage)
+	query = fmt.Sprintf("Select * FROM %s %s %s LIMIT %d OFFSET %d", tableVideo, where, sort, fil.PageLength, (fil.PageNumber-1)*fil.PageLength)
 	where, sort = "", ""
 
 	fmt.Println(query)

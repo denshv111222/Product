@@ -101,16 +101,13 @@ func (api *API) PostAttributes_values_products(writer http.ResponseWriter, req *
 }
 func (api *API) GetAettributes_values_products(writer http.ResponseWriter, req *http.Request) {
 	var (
-		filter models.Filter
+		filter models.PageRequest
 	)
 	initHeaders(writer)
-	pg := models.Pages{}
-	fl := make([]models.FieldFilter, 0)
-	so := make([]models.FieldSort, 0)
-	filter = models.Filter{
+	fl := make([]models.Field, 0)
+
+	filter = models.PageRequest{
 		Fields: &fl,
-		Sorts:  &so,
-		Pages:  &pg,
 	}
 	err := json.NewDecoder(req.Body).Decode(&filter)
 	if err != nil {
@@ -125,7 +122,7 @@ func (api *API) GetAettributes_values_products(writer http.ResponseWriter, req *
 		return
 	}
 	fmt.Println(filter)
-	brand, err := api.storage.Attributes_values_products().FilterAllAttributes_values_products(&filter)
+	list, err := api.storage.Attributes_values_products().FilterAllAttributes_values_products(&filter)
 	if err != nil {
 		api.logger.Info("Error while brands SelectAll: ", err)
 		msg := Message{
@@ -138,6 +135,19 @@ func (api *API) GetAettributes_values_products(writer http.ResponseWriter, req *
 		return
 	}
 	writer.WriteHeader(200)
-	json.NewEncoder(writer).Encode(brand)
-	json.NewEncoder(writer).Encode(filter)
+	Resp := struct {
+		PgNum    int `json:"pg_number"`
+		PgLen    int `json:"pg_length"`
+		TotalRec int `json:"total_rec"`
+		TotalPg  int `json:"total_pg"`
+		List     []*models.Attributes_values_products
+	}{
+		filter.PageNumber,
+		filter.PageLength,
+		filter.TotalRecords,
+		AllPage(filter.TotalRecords, filter.PageLength),
+		list,
+	}
+	json.NewEncoder(writer).Encode(Resp)
+
 }
