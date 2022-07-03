@@ -59,7 +59,7 @@ func (brRep *Brandrepository) UpdateBrand(id int, c *models.Brand) error {
 	}
 	return nil
 }
-func (brRep *Brandrepository) FilterAllBrands(fil *models.PageRequest) ([]*models.Brand, error) { //срань которую надо переделать(а можно и не переделывать)
+func (brRep *Brandrepository) FilterAllBrands(fil *models.PageRequest) ([]*models.Brand, error) {
 	fieldlist := make([]string, 0)
 	sortList := make([]string, 0)
 
@@ -76,12 +76,13 @@ func (brRep *Brandrepository) FilterAllBrands(fil *models.PageRequest) ([]*model
 			} else {
 				where = ""
 			}
-		}
-		for _, sorts := range *fil.Fields {
-			if sorts.Order == false {
-				sortList = append(sortList, sorts.Name+" "+"DESC")
+			fmt.Println(filters.Order)
+			sort = "Order by "
+			if !filters.Order {
+				sortList = append(sortList, filters.Name+" "+"DESC ")
 			} else {
-				sort = ""
+				sortList = append(sortList, filters.Name+" "+"ASC ")
+
 			}
 		}
 	}

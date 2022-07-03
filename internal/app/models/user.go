@@ -1,6 +1,5 @@
 package models
 
-//User model defeniton
 type User struct {
 	Id       int    `json:"id_user"`
 	Login    string `json:"login_user"`

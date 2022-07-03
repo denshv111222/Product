@@ -82,7 +82,7 @@ func (s *Storage) Unit() *Unitrepository {
 }
 
 func (s *Storage) Category() *Categoryrepository {
-	if s.unitRepository != nil {
+	if s.categoryRepository != nil {
 		return s.categoryRepository
 	}
 	s.categoryRepository = &Categoryrepository{
@@ -92,7 +92,7 @@ func (s *Storage) Category() *Categoryrepository {
 }
 
 func (s *Storage) Brand() *Brandrepository {
-	if s.unitRepository != nil {
+	if s.brandRepository != nil {
 		return s.brandRepository
 	}
 	s.brandRepository = &Brandrepository{
@@ -102,7 +102,7 @@ func (s *Storage) Brand() *Brandrepository {
 }
 
 func (s *Storage) Product() *Productrepository {
-	if s.unitRepository != nil {
+	if s.productRepository != nil {
 		return s.productRepository
 	}
 	s.productRepository = &Productrepository{
@@ -122,7 +122,7 @@ func (s *Storage) Products_images() *Products_imagesrepository {
 }
 
 func (s *Storage) Products_videos() *Products_videosrepository {
-	if s.unitRepository != nil {
+	if s.products_videosRepository != nil {
 		return s.products_videosRepository
 	}
 	s.products_videosRepository = &Products_videosrepository{
@@ -132,7 +132,7 @@ func (s *Storage) Products_videos() *Products_videosrepository {
 }
 
 func (s *Storage) Attributes() *Attributsrepository {
-	if s.unitRepository != nil {
+	if s.attributsRepository != nil {
 		return s.attributsRepository
 	}
 	s.attributsRepository = &Attributsrepository{
@@ -141,7 +141,7 @@ func (s *Storage) Attributes() *Attributsrepository {
 	return s.attributsRepository
 }
 func (s *Storage) Attributes_values() *Attributs_valuesrepository {
-	if s.unitRepository != nil {
+	if s.attributs_valuesRepository != nil {
 		return s.attributs_valuesRepository
 	}
 	s.attributs_valuesRepository = &Attributs_valuesrepository{
@@ -151,7 +151,7 @@ func (s *Storage) Attributes_values() *Attributs_valuesrepository {
 }
 
 func (s *Storage) Attributes_values_products() *Attributs_values_productsrepository {
-	if s.unitRepository != nil {
+	if s.attributs_values_productsRepository != nil {
 		return s.attributs_values_productsRepository
 	}
 	s.attributs_values_productsRepository = &Attributs_values_productsrepository{
@@ -161,7 +161,7 @@ func (s *Storage) Attributes_values_products() *Attributs_values_productsreposit
 }
 
 func (s *Storage) Categories_products() *Category_productrepository {
-	if s.unitRepository != nil {
+	if s.category_productRepository != nil {
 		return s.category_productRepository
 	}
 	s.category_productRepository = &Category_productrepository{

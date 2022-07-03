@@ -80,10 +80,13 @@ func (atvalRep *Attributs_valuesrepository) FilterAllatributes_values(fil *model
 			}
 		}
 		for _, sorts := range *fil.Fields {
-			if sorts.Order == false {
-				sortList = append(sortList, sorts.Name+" "+"DESC")
+			fmt.Println(sorts.Order)
+			sort = "Order by "
+			if !sorts.Order {
+				sortList = append(sortList, sorts.Name+" "+"DESC ")
 			} else {
-				sort = ""
+				sortList = append(sortList, sorts.Name+" "+"ASC ")
+
 			}
 		}
 	}

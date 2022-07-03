@@ -78,10 +78,13 @@ func (im *Imagerepository) FilterAllImages(fil *models.PageRequest) ([]*models.I
 			}
 		}
 		for _, sorts := range *fil.Fields {
-			if sorts.Order == false {
-				sortList = append(sortList, sorts.Name+" "+"DESC")
+			fmt.Println(sorts.Order)
+			sort = "Order by "
+			if !sorts.Order {
+				sortList = append(sortList, sorts.Name+" "+"DESC ")
 			} else {
-				sort = ""
+				sortList = append(sortList, sorts.Name+" "+"ASC ")
+
 			}
 		}
 	}
